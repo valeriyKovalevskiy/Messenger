@@ -1,0 +1,9 @@
+Messenger.xcodeproj/xcuserdata
+Messenger.xcworkspace/xcshareddata
+Messenger.xcworkspace/xcuserdata
+*.ipa
+*.zip
+*.xcarchive
+*.xcworkspace
+Pods
+Podfile.lock
