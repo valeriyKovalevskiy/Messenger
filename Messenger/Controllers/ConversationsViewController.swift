@@ -49,6 +49,8 @@ class ConversationsViewController: UIViewController {
         return table
     }()
     
+    private var loginObserver: NSObjectProtocol?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -60,12 +62,23 @@ class ConversationsViewController: UIViewController {
         setupTableView()
         fetchConversations()
         startListeningForConversations()
+        
+        loginObserver = NotificationCenter.default.addObserver(forName: .didLogInNotification, object: nil, queue: .main, using: { [weak self] _ in
+            guard let strongSelf = self else { return }
+            
+            strongSelf.startListeningForConversations()
+            
+        })
     }
     
     private func startListeningForConversations() {
         guard let email = UserDefaults.standard.value(forKey: "email") as? String else { return }
         
-        print("satrting conversation fetch ....")
+        if let observer = loginObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        
+        print("starrting conversation fetch ....")
         let safeEmail = DatabaseManager.safeEmail(emailAddress: email)
         
         DatabaseManager.shared.getAllConversations(for: safeEmail, completion: { [weak self] result in
@@ -147,10 +160,8 @@ extension ConversationsViewController: UITableViewDelegate, UITableViewDataSourc
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let model = conversations[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.identifier,
-                                                 for: indexPath) as! ConversationTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.identifier, for: indexPath) as! ConversationTableViewCell
         cell.configure(with: model)
-
         
         return cell
     }
@@ -170,4 +181,25 @@ extension ConversationsViewController: UITableViewDelegate, UITableViewDataSourc
         120
     }
     
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            
+            let conversationId = conversations[indexPath.row].id
+            
+            tableView.beginUpdates()
+            
+            DatabaseManager.shared.deleteConversation(conversationId: conversationId) { [weak self] success in
+                if success {
+                    self?.conversations.remove(at: indexPath.row)
+                    tableView.deleteRows(at: [indexPath], with: .left)
+                }
+            }
+            
+            tableView.endUpdates()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .delete
+    }
 }
