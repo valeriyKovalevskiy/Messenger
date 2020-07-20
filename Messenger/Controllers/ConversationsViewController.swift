@@ -143,7 +143,7 @@ class ConversationsViewController: UIViewController {
         }
         
         let navVC = UINavigationController(rootViewController: vc)
-        navVC.modalPresentationStyle = .overFullScreen
+//        navVC.modalPresentationStyle = .overFullScreen
         present(navVC, animated: true)
     }
     
