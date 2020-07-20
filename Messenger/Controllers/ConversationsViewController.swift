@@ -54,13 +54,13 @@ class ConversationsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = .systemBackground
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(didTappedComposeButton))
         
         view.addSubview(tableView)
         view.addSubview(noConversationsLabel)
         
         setupTableView()
-        fetchConversations()
         startListeningForConversations()
         
         loginObserver = NotificationCenter.default.addObserver(forName: .didLogInNotification, object: nil, queue: .main, using: { [weak self] _ in
@@ -69,6 +69,16 @@ class ConversationsViewController: UIViewController {
             strongSelf.startListeningForConversations()
             
         })
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        tableView.frame = view.bounds
+        noConversationsLabel.frame = CGRect(x: 10,
+                                            y: (view.height - 100) / 2,
+                                            width: view.width - 20,
+                                            height: 100)
     }
     
     private func startListeningForConversations() {
@@ -85,8 +95,14 @@ class ConversationsViewController: UIViewController {
             switch result {
             case .success(let conversations):
                 
-                guard !conversations.isEmpty else { return }
+                guard !conversations.isEmpty else {
+                    self?.tableView.isHidden = true
+                    self?.noConversationsLabel.isHidden = false
+                    return
+                }
                 
+                self?.noConversationsLabel.isHidden = true
+                self?.tableView.isHidden = false
                 self?.conversations = conversations
                 
                 DispatchQueue.main.async {
@@ -95,14 +111,10 @@ class ConversationsViewController: UIViewController {
                 
             case .failure(let error):
                 print("failed to get convos: \(error)")
+                self?.tableView.isHidden = true
+                self?.noConversationsLabel.isHidden = false
                 }
         })
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        
-        tableView.frame = view.bounds
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -117,7 +129,6 @@ class ConversationsViewController: UIViewController {
     }
     
     private func fetchConversations() {
-        tableView.isHidden = false
     }
     
     @objc private func didTappedComposeButton() {
