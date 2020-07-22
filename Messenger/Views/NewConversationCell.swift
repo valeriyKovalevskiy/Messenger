@@ -54,15 +54,17 @@ class NewConversationCell: UITableViewCell {
     }
     
     public func configure(with model: SearchResult) {
-        self.userNameLabel.text = model.name
+        userNameLabel.text = model.name
         
         let path = "images/\(model.email)_profile_picture.png"
         StorageManager.shared.downloadURL(for: path) { [weak self] result in
+            guard let strongSelf = self else { return }
+
             switch result {
             case .success(let url):
                 
                 DispatchQueue.main.async {
-                    self?.userImageView.sd_setImage(with: url, completed: nil)
+                    strongSelf.userImageView.sd_setImage(with: url, completed: nil)
                 }
                 
             case .failure(let error):

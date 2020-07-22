@@ -10,20 +10,7 @@ import UIKit
 import FirebaseAuth
 import JGProgressHUD
 
-struct Conversation {
-    let id: String
-    let name: String
-    let otherUserEmail: String
-    let latestMessage: LatestMessage
-}
-
-struct LatestMessage {
-    let date: String
-    let text: String
-    let isRead: Bool
-}
-
-class ConversationsViewController: UIViewController {
+final class ConversationsViewController: UIViewController {
     
     
     private let spinner = JGProgressHUD(style: .dark)
@@ -91,30 +78,32 @@ class ConversationsViewController: UIViewController {
         print("starrting conversation fetch ....")
         let safeEmail = DatabaseManager.safeEmail(emailAddress: email)
         
-        DatabaseManager.shared.getAllConversations(for: safeEmail, completion: { [weak self] result in
+        DatabaseManager.shared.getAllConversations(for: safeEmail) { [weak self] result in
+            guard let strongSelf = self else { return }
+            
             switch result {
             case .success(let conversations):
                 
                 guard !conversations.isEmpty else {
-                    self?.tableView.isHidden = true
-                    self?.noConversationsLabel.isHidden = false
+                    strongSelf.tableView.isHidden = true
+                    strongSelf.noConversationsLabel.isHidden = false
                     return
                 }
                 
-                self?.noConversationsLabel.isHidden = true
-                self?.tableView.isHidden = false
-                self?.conversations = conversations
+                strongSelf.noConversationsLabel.isHidden = true
+                strongSelf.tableView.isHidden = false
+                strongSelf.conversations = conversations
                 
                 DispatchQueue.main.async {
-                    self?.tableView.reloadData()
+                    strongSelf.tableView.reloadData()
                 }
                 
             case .failure(let error):
                 print("failed to get convos: \(error)")
-                self?.tableView.isHidden = true
-                self?.noConversationsLabel.isHidden = false
-                }
-        })
+                strongSelf.tableView.isHidden = true
+                strongSelf.noConversationsLabel.isHidden = false
+            }
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -236,10 +225,13 @@ extension ConversationsViewController: UITableViewDelegate, UITableViewDataSourc
             
             tableView.beginUpdates()
             
-            DatabaseManager.shared.deleteConversation(conversationId: conversationId) { [weak self] success in
-                if success {
-                    self?.conversations.remove(at: indexPath.row)
-                    tableView.deleteRows(at: [indexPath], with: .left)
+            self.conversations.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .left)
+
+            DatabaseManager.shared.deleteConversation(conversationId: conversationId) { success in
+                
+                if !success {
+                    //add model and row back and show error alert
                 }
             }
             

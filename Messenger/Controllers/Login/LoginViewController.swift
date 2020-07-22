@@ -10,7 +10,7 @@ import UIKit
 import FirebaseAuth
 import JGProgressHUD
 
-class LoginViewController: UIViewController {
+final class LoginViewController: UIViewController {
 
     private let spinner = JGProgressHUD(style: .dark)
     
@@ -71,6 +71,17 @@ class LoginViewController: UIViewController {
         
     }()
     
+    private let crashButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Crash", for: .normal)
+        button.backgroundColor = .link
+        button.layer.cornerRadius = 12
+        button.layer.masksToBounds = true
+        button.titleLabel?.font = .systemFont(ofSize: 20, weight: .bold)
+        
+        return button
+    }()
+
     private var loginObserver: NSObjectProtocol?
     
     override func viewDidLoad() {
@@ -102,7 +113,15 @@ class LoginViewController: UIViewController {
         scrollView.addSubview(emailField)
         scrollView.addSubview(passwordField)
         scrollView.addSubview(loginButton)
-    }
+        
+        scrollView.addSubview(crashButton)
+        
+        crashButton.addTarget(self, action: #selector(crashButtonTapped), for: .touchUpInside)
+        }
+    
+        @objc private func crashButtonTapped() {
+            fatalError()
+        }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -126,6 +145,10 @@ class LoginViewController: UIViewController {
                                   width: scrollView.width - 60,
                                   height: 52)
 
+        crashButton.frame = CGRect(x: 30,
+                                   y: loginButton.bottom + 10,
+                                   width: scrollView.width - 60,
+                                   height: 52)
     }
 
     @objc private func didTappedLoginButton() {

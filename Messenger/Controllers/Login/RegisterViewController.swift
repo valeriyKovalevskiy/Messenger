@@ -10,7 +10,7 @@ import UIKit
 import FirebaseAuth
 import JGProgressHUD
 
-class RegisterViewController: UIViewController {
+final class RegisterViewController: UIViewController {
     
     private let spinner = JGProgressHUD(style: .dark)
     
@@ -262,22 +262,14 @@ extension RegisterViewController: UITextFieldDelegate {
 extension RegisterViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     func presentPhotoActionSheet() {
-        let actionSheet = UIAlertController(title: "Profile Picture",
-                                            message: "How would you like to select a pucture?",
-                                            preferredStyle: .actionSheet)
-        actionSheet.addAction(UIAlertAction(title: "Cancel",
-                                            style: .cancel,
-                                            handler: nil))
-        actionSheet.addAction(UIAlertAction(title: "Take Photo",
-                                            style: .default,
-                                            handler: { [weak self] _ in
-                                                self?.presentCamera()
-        }))
-        actionSheet.addAction(UIAlertAction(title: "Choose Photo",
-                                            style: .default,
-                                            handler: { [weak self] _ in
-                                                self?.presentPhotoPicker()
-        }))
+        let actionSheet = UIAlertController(title: "Profile Picture", message: "How would you like to select a pucture?", preferredStyle: .actionSheet)
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(UIAlertAction(title: "Take Photo", style: .default) { [weak self] _ in
+            self?.presentCamera()
+        })
+        actionSheet.addAction(UIAlertAction(title: "Choose Photo", style: .default) { [weak self] _ in
+            self?.presentPhotoPicker()
+        })
         
         present(actionSheet, animated: true)
     }

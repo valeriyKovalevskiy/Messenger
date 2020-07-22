@@ -14,57 +14,7 @@ import AVFoundation
 import AVKit
 import CoreLocation
 
-struct Message: MessageType {
-    public var sender: SenderType
-    public var messageId: String
-    public var sentDate: Date
-    public var kind: MessageKind
-}
-
-struct Media: MediaItem {
-    var url: URL?
-    var image: UIImage?
-    var placeholderImage: UIImage
-    var size: CGSize
-}
-
-struct Location: LocationItem {
-    var location: CLLocation
-    var size: CGSize
-}
-
-extension MessageKind {
-    var messageKindString: String {
-        switch self {
-        case .text(_):
-            return "text"
-        case .attributedText(_):
-            return "attributedText"
-        case .photo(_):
-            return "photo"
-        case .video(_):
-            return "video"
-        case .location(_):
-            return "location"
-        case .emoji(_):
-           return "emoji"
-        case .audio(_):
-            return "audio"
-        case .contact(_):
-            return "contact"
-        case .custom(_):
-            return "custom"
-        }
-    }
-}
-
-struct Sender: SenderType {
-    public var photoURL: String
-    public var senderId: String
-    public var displayName: String
-}
-
-class ChatViewController: MessagesViewController {
+final class ChatViewController: MessagesViewController {
 
     private var senderPhotoURL: URL?
     private var otherUserPhotoURL: URL?
@@ -254,18 +204,19 @@ class ChatViewController: MessagesViewController {
     
     private func listenForMessages(id: String, shouldScrollTobottom: Bool) {
         DatabaseManager.shared.getAllMessagesForConversation(with: id, completion: { [weak self] result in
+            guard let strongSelf = self else { return }
             switch result {
             case .success(let messages):
                 print("success in getting messages: \(messages)")
 
                 guard !messages.isEmpty else { return }
                 print("messages are empty")
-                self?.messages = messages
+                strongSelf.messages = messages
                 
                 DispatchQueue.main.async {
-                    self?.messagesCollectionView.reloadDataAndKeepOffset()
+                    strongSelf.messagesCollectionView.reloadDataAndKeepOffset()
                     if shouldScrollTobottom {
-                        self?.messagesCollectionView.scrollToBottom()
+                        strongSelf.messagesCollectionView.scrollToBottom()
                     }
                 }
                 
@@ -279,7 +230,7 @@ class ChatViewController: MessagesViewController {
 
 extension ChatViewController: InputBarAccessoryViewDelegate {
     func inputBar(_ inputBar: InputBarAccessoryView, didPressSendButtonWith text: String) {
-        guard !text.replacingOccurrences(of: " ", with: "").isEmpty, let selfSender = self.selfSender, let messageId = createMessageId() else { return }
+        guard !text.replacingOccurrences(of: " ", with: "").isEmpty, let selfSender = selfSender, let messageId = createMessageId() else { return }
         
         print("sending: \(text)")
         let message = Message(sender: selfSender,
@@ -288,38 +239,41 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
                               kind: .text(text))
 
         if isNewConversation {
-            DatabaseManager.shared.createNewConversation(with: otherUserEmail, name: self.title ?? "User", firstMessage: message, completion: { [weak self] success in
+            DatabaseManager.shared.createNewConversation(with: otherUserEmail, name: title ?? "User", firstMessage: message) { [weak self] success in
+                guard let strongSelf = self else { return }
+                
                 if success {
                     print("message sent")
                     let newConversationId = "conversation_\(message.messageId)"
 
-                    self?.isNewConversation = false
-                    self?.conversationId = newConversationId
-                    self?.listenForMessages(id: newConversationId, shouldScrollTobottom: true)
-                    self?.messageInputBar.inputTextView.text = nil
+                    strongSelf.isNewConversation = false
+                    strongSelf.conversationId = newConversationId
+                    strongSelf.listenForMessages(id: newConversationId, shouldScrollTobottom: true)
+                    strongSelf.messageInputBar.inputTextView.text = nil
                     
                 } else {
                     print("failed to send")
                 }
-            })
-        } else {
+            }
+        }
+        else {
             guard let conversationId = conversationId, let name = self.title else { return }
-            DatabaseManager.shared.sendMessage(to: conversationId, otherUserEmail: otherUserEmail, name: name, newMessage: message, completion: { [weak self] success in
+            DatabaseManager.shared.sendMessage(to: conversationId, otherUserEmail: otherUserEmail, name: name, newMessage: message) { [weak self] success in
+                guard let strongSelf = self else { return }
+                
                 if success {
                 
-                    self?.messageInputBar.inputTextView.text = nil
+                    strongSelf.messageInputBar.inputTextView.text = nil
                     print("message sent")
                 } else {
                     print("failed to send")
                 }
-            })
+            }
         }
         //send message
     }
     
     private func createMessageId() -> String? {
-        //date, otherUserEmmail, senderEmail, randomInt
-        
         guard let currentUserEmail = UserDefaults.standard.value(forKey: "email") as? String else { return nil }
         
         let safeCurrentEmail = DatabaseManager.safeEmail(emailAddress: currentUserEmail)
@@ -382,9 +336,11 @@ extension ChatViewController: MessagesDataSource, MessagesLayoutDelegate, Messag
                     
                     
                     StorageManager.shared.downloadURL(for: path) { [weak self] result in
+                        guard let strongSelf = self else { return }
+                        
                         switch result {
                         case .success(let url):
-                            self?.senderPhotoURL = url
+                            strongSelf.senderPhotoURL = url
                             DispatchQueue.main.async {
                                 avatarView.sd_setImage(with: url, completed: nil)
                             }
@@ -406,9 +362,11 @@ extension ChatViewController: MessagesDataSource, MessagesLayoutDelegate, Messag
                     
                     
                     StorageManager.shared.downloadURL(for: path) { [weak self] result in
+                        guard let strongSelf = self else { return }
+
                         switch result {
                         case .success(let url):
-                            self?.otherUserPhotoURL = url
+                            strongSelf.otherUserPhotoURL = url
                             DispatchQueue.main.async {
                                 avatarView.sd_setImage(with: url, completed: nil)
                             }
@@ -434,6 +392,7 @@ extension ChatViewController: MessageCellDelegate {
         case .location(let locationData):
             let coordinates = locationData.location.coordinate
             let vc = LocationPickerViewController(coordinates: coordinates)
+        
             vc.title = "Location"
             self.navigationController?.pushViewController(vc, animated: true)
         default:
