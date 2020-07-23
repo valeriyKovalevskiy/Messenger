@@ -71,9 +71,9 @@ final class LoginViewController: UIViewController {
         
     }()
     
-    private let crashButton: UIButton = {
+    private let smsButton: UIButton = {
         let button = UIButton()
-        button.setTitle("Crash", for: .normal)
+        button.setTitle("Log in vith OTP", for: .normal)
         button.backgroundColor = .link
         button.layer.cornerRadius = 12
         button.layer.masksToBounds = true
@@ -103,24 +103,23 @@ final class LoginViewController: UIViewController {
                                                             action: #selector(didTappedRegister))
         
         loginButton.addTarget(self, action: #selector(didTappedLoginButton), for: .touchUpInside)
-        
+        smsButton.addTarget(self, action: #selector(smsButtonTapped), for: .touchUpInside)
+
         emailField.delegate = self
         passwordField.delegate = self
         
-        //add subviews
         view.addSubview(scrollView)
         scrollView.addSubview(imageView)
         scrollView.addSubview(emailField)
         scrollView.addSubview(passwordField)
         scrollView.addSubview(loginButton)
-        
-        scrollView.addSubview(crashButton)
-        
-        crashButton.addTarget(self, action: #selector(crashButtonTapped), for: .touchUpInside)
+        scrollView.addSubview(smsButton)
         }
     
-        @objc private func crashButtonTapped() {
-            fatalError()
+        @objc private func smsButtonTapped() {
+            let vc = SmsViewController()
+            vc.title = "SMS VERIFICATION"
+            navigationController?.pushViewController(vc, animated: true)
         }
     
     override func viewDidLayoutSubviews() {
@@ -145,7 +144,7 @@ final class LoginViewController: UIViewController {
                                   width: scrollView.width - 60,
                                   height: 52)
 
-        crashButton.frame = CGRect(x: 30,
+        smsButton.frame = CGRect(x: 30,
                                    y: loginButton.bottom + 10,
                                    width: scrollView.width - 60,
                                    height: 52)

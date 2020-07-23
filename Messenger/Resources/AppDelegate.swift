@@ -6,35 +6,59 @@
 //  Copyright © 2020 Valeriy Kovalevskiy. All rights reserved.
 //
 
+
 import UIKit
 import Firebase
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
-
-
+    weak var screen : UIView? = nil
+    var window: UIWindow?
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
         FirebaseApp.configure()
 
+//        window = UIWindow(frame: UIScreen.main.bounds)
+//        window?.rootViewController = ChatViewController()
+//        window?.makeKeyAndVisible()
+        
         return true
     }
 
-    // MARK: UISceneSession Lifecycle
-
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Called when a new scene session is being created.
-        // Use this method to select a configuration to create the new scene with.
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    func applicationDidEnterBackground(_ application: UIApplication) {}
+    
+    func applicationWillEnterForeground(_ application: UIApplication) {
+    }
+    
+    func applicationWillTerminate(_ application: UIApplication) {}
+    
+    //MARK: - Secure sensitive data methods
+    func applicationWillResignActive(_ application: UIApplication) {
+        showBlurScreen()
+    }
+    
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        removeBlurScreen()
+    }
+    
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        return Auth.auth().canHandle(url)
+    }
+    
+}
+//MARK: - Hide sensitive data methods
+extension AppDelegate {
+    fileprivate func showBlurScreen(style: UIBlurEffect.Style = UIBlurEffect.Style.regular) {
+        screen = UIScreen.main.snapshotView(afterScreenUpdates: false)
+        let blurEffect = UIBlurEffect(style: style)
+        let blurBackground = UIVisualEffectView(effect: blurEffect)
+        screen?.addSubview(blurBackground)
+        blurBackground.frame = (screen?.frame)!
+        window?.addSubview(screen!)
     }
 
-    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
-        // Called when the user discards a scene session.
-        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+    fileprivate func removeBlurScreen() {
+        screen?.removeFromSuperview()
     }
-
-
 }
 
